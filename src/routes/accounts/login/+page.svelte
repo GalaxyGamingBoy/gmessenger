@@ -1,14 +1,43 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { defaultServer } from '$lib/stores';
+	import { cred, defaultServer, logged } from '$lib/stores';
 	import { get } from 'svelte/store';
 
 	let server: string = get(defaultServer);
 	let user: string;
 	let pass: string;
+	let errorMessage: string;
 
-	const login = () => {
+	if (get(logged)) {
 		goto('/home');
+	}
+
+	const login = async () => {
+		errorMessage = '';
+		if (server && user && pass) {
+			const url = (server.endsWith('/') ? server : server + '/') + 'login';
+			const req = await fetch(url, {
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				method: 'POST',
+				body: JSON.stringify({ username: user, password: pass })
+			}).then((v) => v.json());
+
+			if (req.result == true) {
+				cred.set({
+					user: user,
+					token: String(req.jwt),
+					server: server.endsWith('/') ? server : server + '/'
+				});
+				logged.set(true);
+				goto('/home');
+			} else {
+				errorMessage = req.msg;
+			}
+		} else {
+			errorMessage = 'You must fill out all fields!';
+		}
 	};
 </script>
 
@@ -16,6 +45,13 @@
 	<div class="flex justify-center my-5">
 		<h1 class="text-3xl">Login to use <strong class="underline">GMessenger</strong></h1>
 	</div>
+	{#if errorMessage}
+		<div class="flex justify-center align-center">
+			<div class="w-[80vw] h10 bg-red-600 rounded border">
+				<h2 class="text-xl text-white font-semibold text-center">{errorMessage}</h2>
+			</div>
+		</div>
+	{/if}
 	<br />
 	<div class="flex justify-center m-5">
 		<form class="">
