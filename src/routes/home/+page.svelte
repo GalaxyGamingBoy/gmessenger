@@ -39,6 +39,7 @@
 		<div class="flex items-end h-[43.5vh] mx-1">
 			<div>
 				<p>Connected to server: <strong>localhost:8080</strong>, as: <strong>UserA</strong></p>
+				<a href="/accounts/logout">Have to leave, <strong class="underline">logout</strong>.</a>
 			</div>
 		</div>
 	</div>
@@ -100,7 +101,7 @@
 				<!-- BOTTOM BAR -->
 				<form>
 					<div class="text-gray-800 inline">
-						<input type="text" class="rounded bg-gray-400 w-10/12" required bind:value={msg} />
+						<input type="text" class="rounded bg-gray-400 w-10/12" bind:value={msg} />
 					</div>
 					<button
 						class="inline rounded bg-blue-700 hover:bg-blue-900 py-2 px-4 mx-2.5 font-semibold text-base"
