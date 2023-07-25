@@ -34,6 +34,9 @@
 				goto('/home');
 			} else {
 				errorMessage = req.msg;
+				if (errorMessage == 'Already logged in') {
+					goto('/accounts/logout');
+				}
 			}
 		} else {
 			errorMessage = 'You must fill out all fields!';
