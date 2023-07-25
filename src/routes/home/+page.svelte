@@ -1,4 +1,35 @@
 <script>
+	import { goto } from '$app/navigation';
+	import { cred } from '$lib/stores';
+	import { get } from 'svelte/store';
+
+	const ws = new WebSocket(
+		`${new URL(get(cred).server).protocol == 'https:' ? 'wss' : 'ws'}://${
+			new URL(get(cred).server).host
+		}/socket?token=${get(cred).token}`
+	);
+
+	ws.onerror = (err) => {
+		console.error(err);
+		goto('/accounts/logout');
+	};
+
+	ws.onopen = () => {
+		console.log(
+			'Connected to server: ' +
+				`${new URL(get(cred).server).protocol == 'https:' ? 'wss' : 'ws'}://${
+					new URL(get(cred).server).host
+				}/socket?token=${get(cred).token}`
+		);
+	};
+
+	ws.onclose = () => {
+		() => {
+			console.log('Disconnected from server!');
+			goto('/accounts/logout');
+		};
+	};
+
 	let msg = '';
 </script>
 
