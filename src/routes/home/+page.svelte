@@ -13,7 +13,8 @@
 
 	// Set Channels
 	let channels = new Map<string, Array<{ msg: string; user: string }>>();
-	channels.set('welcome', []);
+	let channelList: Array<string> = [];
+	let channelListVisible = false;
 
 	// Establish Websocket
 	const ws = new WebSocket(
@@ -29,13 +30,15 @@
 	};
 
 	// On Open WS Connection
-	ws.onopen = () => {
+	ws.onopen = async () => {
 		console.log(
 			'Connected to server: ' +
 				`${new URL(get(cred).server).protocol == 'https:' ? 'wss' : 'ws'}://${
 					new URL(get(cred).server).host
 				}/socket?token=${get(cred).token}`
 		);
+
+		await getSubscribedChannels();
 	};
 
 	// Disconnect on close
@@ -82,6 +85,27 @@
 		}
 	};
 
+	const getSubscribedChannels = async () => {
+		const req = await fetch(`${get(cred).server}get/subscribed`, {
+			method: 'GET',
+			headers: {
+				'x-jwt': get(cred).token
+			}
+		});
+
+		const chans = (await req.json()).channels as Array<string>;
+		chans.forEach((c) => channels.set(c, []));
+		channels = channels;
+	};
+
+	const subscribe = async (channel: string) => {};
+	const unsubscribe = async (channel: string) => {};
+	const viewChannelList = async () => {
+		const req = await fetch(`${get(cred).server}get/channels`);
+		channelList = (await req.json()).channels;
+		channelListVisible = true;
+	};
+
 	// Select Default Channel
 	if (location.hash == '') {
 		location.hash = 'welcome';
@@ -99,7 +123,7 @@
 			<div class="my-3 flex justify-center">
 				<button
 					class="rounded bg-green-500 hover:bg-green-700 text-gray-700 py-2 px-4 font-semibold w-full mx-5"
-					><!-- ICON -->Channel List</button
+					on:click={viewChannelList}><!-- ICON -->Channel List</button
 				>
 			</div>
 			<div class="my-3 flex justify-center">
@@ -153,14 +177,50 @@
 			</div>
 			<div class="m-1 mx-2 overflow-y-scroll h-[82.5vh]" id="msg-list">
 				<!-- CONTENT -->
-				<div>
-					{#each channels.get(location.hash.replace('#', '')) || [] as m}
-						<div class="my-1">
-							<h1 class="font-semibold text-lg">{m.user}</h1>
-							<p>{m.msg}</p>
+				{#if !channelListVisible}
+					<div>
+						{#each channels.get(location.hash.replace('#', '')) || [] as m}
+							<div class="my-1">
+								<h1 class="font-semibold text-lg">{m.user}</h1>
+								<p>{m.msg}</p>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<div class="flex justify-center">
+						<div class="flex justify-center my-24 w-7/12 h-[50vh] rounded-lg bg-gray-900">
+							<div class="text-lg overflow-y-scroll">
+								<div>
+									<h1 class="text-2xl underline inline">Channel <strong>List</strong></h1>
+									<button
+										class="inline rounded bg-red-500 hover:bg-red-700 text-gray-700 px-3 mx-5 font-semibold"
+										on:click={() => (channelListVisible = false)}>X</button
+									>
+								</div>
+								<div>
+									<ul>
+										{#each channelList as c}
+											<li class="my-2">
+												# <strong class={channels.has(c) ? 'underline' : ''}>{c}</strong>
+												{#if channels.has(c)}
+													<button
+														class="rounded bg-red-500 hover:bg-red-700 text-gray-700 py-1 px-4 mx-5 font-semibold"
+														on:click={() => subscribe(c)}>- Unsubscribe</button
+													>
+												{:else}
+													<button
+														class="rounded bg-green-500 hover:bg-green-700 text-gray-700 py-1 px-4 mx-5 font-semibold"
+														on:click={() => subscribe(c)}>+ Subscribe</button
+													>
+												{/if}
+											</li>
+										{/each}
+									</ul>
+								</div>
+							</div>
 						</div>
-					{/each}
-				</div>
+					</div>
+				{/if}
 			</div>
 			<div class="mx-2">
 				<!-- BOTTOM BAR -->
